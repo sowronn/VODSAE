@@ -1,31 +1,28 @@
-# Dockerfile for VLC HTTP Streaming
-FROM ubuntu:20.04
+# Utiliser l'image VLC officielle
+FROM videolan/vlc:latest
 
-# Set environment variables to avoid interactive prompts
+# Définir des variables d'environnement
 ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
 
-# Install required packages
-RUN apt-get update && apt-get install -y \
+# Mettre à jour et installer les paquets nécessaires
+RUN apt-get update && \
+    apt-get install -y \
     vlc \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a non-root user
-RUN useradd -m vlcuser
+# Ajouter un utilisateur pour VLC
+RUN useradd -m -s /bin/bash vlcuser
 
-# Copy the test video
-COPY test.mp4 /home/vlcuser/test.mp4
+# Copier le script de démarrage dans le conteneur
+COPY start.sh /home/vlcuser/start.sh
 
-# Change ownership to the non-root user
-RUN chown vlcuser:vlcuser /home/vlcuser/test.mp4
+# Définir les permissions appropriées pour le script
+RUN chmod +x /home/vlcuser/start.sh
 
-# Copy the startup script
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
-# Expose the HTTP port
+# Exposer le port de streaming HTTP
 EXPOSE 8080
 
-# Run the startup script
+# Définir l'utilisateur et la commande pour exécuter le script
 USER vlcuser
-CMD ["/bin/sh", "/start.sh"]
+CMD ["/home/vlcuser/start.sh"]
